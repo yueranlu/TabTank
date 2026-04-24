@@ -32,3 +32,9 @@ canvas.addEventListener('mouseleave', function(e){
 })
 
 // color picker:
+
+const colorPicker = document.getElementById('colorPicker');
+
+color.addEventListener('change', function(e){
+    ctx.strokeStyle = e.target.value;
+})
