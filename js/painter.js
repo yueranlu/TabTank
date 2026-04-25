@@ -3,8 +3,8 @@ const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
 
 //setting paintbrush defaults:
-ctx.lineWideth = '4'
-ctx.linezcap = 'round'
+ctx.lineWidth = '4'
+ctx.lineCap = 'round'
 ctx.lineJoin = 'round'
 ctx.strokeStyle = '#000000'
 
@@ -20,7 +20,7 @@ canvas.addEventListener('mousedown',function(e){
 canvas.addEventListener('mousemove', function(e){
     if(!isDrawing) return;
     ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke
+    ctx.stroke();
 })
 
 canvas.addEventListener('mouseup', function(e){
@@ -35,6 +35,6 @@ canvas.addEventListener('mouseleave', function(e){
 
 const colorPicker = document.getElementById('colorPicker');
 
-color.addEventListener('change', function(e){
+colorPicker.addEventListener('change', function(e){
     ctx.strokeStyle = e.target.value;
 })
