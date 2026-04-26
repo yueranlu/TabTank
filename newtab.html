@@ -10,19 +10,18 @@
 
         <canvas id="fishCanvas"></canvas>
 
-        <button id="drawBtn"></button>
+        <button id="drawBtn">+</button>
 
         <div id="drawOverlay">
-            <button id="closeBtn">x</button>
-                <div id="toolbar">
-                    <input type="text" id = "fishName" placeholder="Name your fish">
-                    <input type="color" id="colorPicker" value="#000000">
-                    <input type="range" id="brushSlider" min="1" max="20" value="4">
-                    <button id="eraserBtn">Eraser</button>
-                    <button id="clearBtn">Clear</button>
-                    <button id="spawnBtn">Save</button>
-                </div>
-                <canvas id="drawCanvas" width="800" height="500"></canvas>
+            <div id="toolbar">
+                <input type="text" id = "fishName" placeholder="Name your fish">
+                <input type="color" id="colorPicker" value="#000000">
+                <input type="range" id="brushSlider" min="1" max="20" value="4">
+                <button id="eraserBtn">Eraser</button>
+                <button id="clearBtn">Clear</button>
+                <button id="spawnBtn">Save</button>
+            </div>
+            <canvas id="drawCanvas" width="800" height="500"></canvas>
         </div>
 
         <div id="baitBucket"> </div>

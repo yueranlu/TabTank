@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@page { size: A4; margin: 2.5cm 2cm; }
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #2c3e50; background: white; }
+h1 { font-size: 36px; color: #1a3a5c; border-bottom: 4px solid #1a3a5c; padding-bottom: 16px; margin-top: 40px; margin-bottom: 30px; }
+h2 { font-size: 24px; color: white; background: #1a3a5c; padding: 12px 20px; border-radius: 6px; margin-top: 40px; margin-bottom: 20px; }
+h3 { font-size: 18px; color: #1a3a5c; border-bottom: 2px solid #1a3a5c; padding-bottom: 6px; margin-top: 28px; margin-bottom: 12px; }
+h4 { font-size: 15px; color: #2c5282; margin-top: 20px; margin-bottom: 8px; }
+pre { background: #f0f4f8; border-left: 4px solid #2b6cb0; padding: 14px 18px; border-radius: 4px; font-size: 12.5px; line-height: 1.5; overflow-x: auto; }
+code { font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 12.5px; }
+p code, li code, td code { background: #ffeef0; color: #c0392b; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+thead { background: #1a3a5c; color: white; }
+th { padding: 10px 14px; text-align: left; font-weight: 600; }
+td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) { background: #f7fafc; }
+blockquote { border-left: 4px solid #38a169; background: #f0fff4; padding: 12px 18px; margin: 16px 0; border-radius: 0 6px 6px 0; }
+blockquote p { margin: 4px 0; }
+ul, ol { padding-left: 24px; margin-bottom: 12px; }
+li { margin-bottom: 6px; }
+hr { border: none; border-top: 2px solid #e2e8f0; margin: 30px 0; }
+strong { color: #1a3a5c; }
+</style>
+</head>
+<body>
+<h1 id="tabtank-updated-build-plan-v4">TabTank — Updated Build Plan (v4)</h1>
+<p><strong>Turn your new tab into an aquarium. Draw your own fish and watch them swim.</strong></p>
+<p>Complete Build Plan — Chrome Extension</p>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#what-you-already-have">What You Already Have</a></li>
+<li><a href="#what-needs-to-change">What Needs to Change</a></li>
+<li><a href="#phase-1--skeleton-get-something-on-screen">Phase 1 — Skeleton (Get Something On Screen)</a></li>
+<li><a href="#phase-2--drawing-tool-painterjs">Phase 2 — Drawing Tool (painter.js)</a></li>
+<li><a href="#phase-3--fish-spawning--swimming-fishjs">Phase 3 — Fish Spawning &amp; Swimming (fish.js)</a></li>
+<li><a href="#phase-4--ocean-backgrounds--mode-system">Phase 4 — Ocean Backgrounds &amp; Mode System</a></li>
+<li><a href="#phase-5--bait-feature">Phase 5 — Bait Feature</a></li>
+<li><a href="#phase-6--persistence-storagejs">Phase 6 — Persistence (storage.js)</a></li>
+<li><a href="#phase-7--bubbles-bubblesjs--optional-polish">Phase 7 — Bubbles (bubbles.js) — Optional Polish</a></li>
+<li><a href="#phase-8--custom-ui--button-art">Phase 8 — Custom UI &amp; Button Art</a></li>
+<li><a href="#layer-stack--z-index-order">Layer Stack &amp; Z-Index Order</a></li>
+<li><a href="#milestone-checklist">Milestone Checklist</a></li>
+</ul>
+<hr />
+<h2 id="what-you-already-have">What You Already Have</h2>
+<h3 id="manifestjson-complete">manifest.json (Complete)</h3>
+<p>Manifest V3 Chrome extension that overrides the new tab page with <code>newtab.html</code>. Permissions for <code>storage</code> and <code>unlimitedStorage</code> are already declared. Icons referenced at 16, 48, and 128px sizes.</p>
+<pre><code class="language-json">{
+  &quot;manifest_version&quot;: 3,
+  &quot;name&quot;: &quot;TabTank&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;Turn your new tab into an aquarium. Draw your own fish and watch them swim!&quot;,
+  &quot;chrome_url_overrides&quot;: {
+    &quot;newtab&quot;: &quot;newtab.html&quot;
+  },
+  &quot;permissions&quot;: [&quot;storage&quot;, &quot;unlimitedStorage&quot;],
+  &quot;icons&quot;: {
+    &quot;16&quot;: &quot;icons/icon16.png&quot;,
+    &quot;48&quot;: &quot;icons/icon48.png&quot;,
+    &quot;128&quot;: &quot;icons/icon128.png&quot;
+  }
+}
+</code></pre>
+<h3 id="git-repository-initialized">Git Repository Initialized</h3>
+<h3 id="newtabhtml-complete">newtab.html (Complete)</h3>
+<p>Fullscreen overlay design with floating draw button, toolbar, and large draw canvas.</p>
+<h3 id="cssstylecss-complete">css/style.css (Complete)</h3>
+<p>Layout rules for body, ocean, fish canvas, draw button, draw overlay, toolbar, draw canvas, and bait bucket.</p>
+<h3 id="jspainterjs-in-progress">js/painter.js (In Progress)</h3>
+<p>Overlay toggle, freehand drawing, color picker, brush size, eraser, and clear button implemented.</p>
+<h3 id="whats-still-missing">What's Still Missing</h3>
+<p>Fish spawning and swimming (fish.js), persistence (storage.js), bubbles (bubbles.js), background art, mode system, custom button art.</p>
+<hr />
+<h2 id="what-needs-to-change">What Needs to Change</h2>
+<p>The drawing experience was redesigned from v1. Instead of a small draw panel always visible in the bottom-right corner, the new design uses:</p>
+<ol>
+<li><strong>A floating "Draw" button</strong> — a single <code>+</code> button visible on the aquarium screen</li>
+<li><strong>A fullscreen drawing overlay</strong> — clicking the button opens/closes a fullscreen view where the entire page becomes the drawing canvas with a toolbar</li>
+</ol>
+<p>This is a better UX because:
+- More drawing space — you're not cramped into a 300×200 box
+- Cleaner aquarium view — no panel cluttering the screen
+- Room for new features — fish naming, larger brush preview, etc.</p>
+<hr />
+<h2 id="phase-1-skeleton-get-something-on-screen">Phase 1 — Skeleton (Get Something On Screen)</h2>
+<blockquote>
+<p><strong>Status: COMPLETE</strong></p>
+</blockquote>
+<h3 id="step-11-file-structure">Step 1.1: File Structure</h3>
+<pre><code>TabTank/
+├── manifest.json               ✅ exists
+├── newtab.html                 ✅ exists
+├── css/
+│   └── style.css               ✅ exists
+├── js/
+│   ├── painter.js              ⚠️ in progress
+│   ├── fish.js                 ⚠️ in progress
+│   ├── bubbles.js
+│   └── storage.js
+├── assets/
+│   ├── backgrounds/
+│   │   ├── ocean/              (standard ocean art)
+│   │   └── pixel/              (pixel art backgrounds, 320×180)
+│   └── ui/                     (custom button art)
+└── icons/
+    ├── icon16.png              ✅ exists
+    ├── icon48.png              ✅ exists
+    └── icon128.png             ✅ exists
+</code></pre>
+<h3 id="step-12-newtabhtml">Step 1.2: newtab.html</h3>
+<p><strong>Aquarium view (always visible):</strong>
+- <code>&lt;div id="ocean"&gt;</code> — background container for your art
+- <code>&lt;canvas id="fishCanvas"&gt;</code> — fullscreen transparent fish swimming surface
+- <code>&lt;button id="drawBtn"&gt;+&lt;/button&gt;</code> — floating button that toggles the drawing overlay
+- <code>&lt;div id="baitBucket"&gt;</code> — bait feature element</p>
+<p><strong>Drawing overlay (hidden by default, toggled by drawBtn):</strong>
+- <code>&lt;div id="drawOverlay"&gt;</code> — fullscreen container, hidden with <code>display: none</code>
+  - <code>&lt;div id="toolbar"&gt;</code> — horizontal bar at the top with all controls:
+    - <code>&lt;input type="text" id="fishName" placeholder="Name your fish"&gt;</code>
+    - <code>&lt;input type="color" id="colorPicker" value="#000000"&gt;</code>
+    - <code>&lt;input type="range" id="brushSlider" min="1" max="20" value="4"&gt;</code>
+    - <code>&lt;button id="eraserBtn"&gt;Eraser&lt;/button&gt;</code>
+    - <code>&lt;button id="clearBtn"&gt;Clear&lt;/button&gt;</code>
+    - <code>&lt;button id="spawnBtn"&gt;Spawn&lt;/button&gt;</code>
+  - <code>&lt;canvas id="drawCanvas" width="800" height="500"&gt;</code></p>
+<p><strong>Script tags (at the bottom, before <code>&lt;/body&gt;</code>):</strong>
+- <code>storage.js</code>, <code>fish.js</code>, <code>painter.js</code>, <code>bubbles.js</code> — in that order</p>
+<h3 id="step-13-stylecss">Step 1.3: style.css</h3>
+<p><strong>Aquarium view elements:</strong></p>
+<table>
+<thead>
+<tr>
+<th>SELECTOR</th>
+<th>KEY PROPERTIES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>body</code></td>
+<td><code>margin: 0; overflow: hidden; width: 100vw; height: 100vh; background: #0a1628;</code></td>
+</tr>
+<tr>
+<td><code>#ocean</code></td>
+<td><code>position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;</code></td>
+</tr>
+<tr>
+<td><code>#fishCanvas</code></td>
+<td><code>position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;</code></td>
+</tr>
+<tr>
+<td><code>#baitBucket</code></td>
+<td><code>position: fixed; z-index: 5; cursor: pointer;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Floating draw button:</strong></p>
+<table>
+<thead>
+<tr>
+<th>SELECTOR</th>
+<th>KEY PROPERTIES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>#drawBtn</code></td>
+<td><code>position: fixed; bottom: 30px; right: 30px; z-index: 21; width: 60px; height: 60px; border-radius: 50%; border: none; background: rgba(0,0,0,0.6); color: white; font-size: 28px; cursor: pointer;</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Drawing overlay:</strong></p>
+<table>
+<thead>
+<tr>
+<th>SELECTOR</th>
+<th>KEY PROPERTIES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>#drawOverlay</code></td>
+<td><code>position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20; display: none; flex-direction: column; align-items: center; background: rgba(0,0,0,0.85);</code></td>
+</tr>
+<tr>
+<td><code>#toolbar</code></td>
+<td><code>display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.7); width: 100%; justify-content: center;</code></td>
+</tr>
+<tr>
+<td><code>#drawCanvas</code></td>
+<td><code>background: white; border-radius: 8px; cursor: crosshair; margin-top: 20px;</code></td>
+</tr>
+<tr>
+<td><code>#fishName</code></td>
+<td><code>padding: 6px 10px; border-radius: 6px; border: none; font-size: 14px;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-14-test-it">Step 1.4: Test It</h3>
+<ol>
+<li>Go to <code>chrome://extensions</code> in your browser</li>
+<li>Enable <strong>Developer mode</strong> (toggle in the top right)</li>
+<li>Click <strong>Load unpacked</strong> → select your TabTank folder (or refresh if already loaded)</li>
+<li>Open a new tab</li>
+</ol>
+<p>You should see: a dark blue screen with a round <code>+</code> button in the bottom-right corner. Clicking it toggles the drawing overlay. Clicking again closes it.</p>
+<blockquote>
+<p><strong>Testing Workflow (use this for every change going forward):</strong>
+After every code change: go to <code>chrome://extensions</code>, click the refresh icon on your extension card, then open a new tab to see the changes.</p>
+</blockquote>
+<hr />
+<h2 id="phase-2-drawing-tool-painterjs">Phase 2 — Drawing Tool (painter.js)</h2>
+<blockquote>
+<p><strong>Status: MOSTLY COMPLETE</strong></p>
+</blockquote>
+<h3 id="step-21-get-the-canvas-context">Step 2.1: Get the Canvas Context</h3>
+<ul>
+<li>Grab <code>#drawCanvas</code> with <code>document.getElementById</code></li>
+<li>Call <code>canvas.getContext('2d')</code> — store the result as <code>ctx</code></li>
+<li>Set initial drawing values:</li>
+<li><code>ctx.lineCap = 'round'</code></li>
+<li><code>ctx.lineJoin = 'round'</code></li>
+<li><code>ctx.lineWidth = 4</code></li>
+<li><code>ctx.strokeStyle = '#000000'</code></li>
+</ul>
+<h3 id="step-22-wire-up-the-overlay-toggle">Step 2.2: Wire Up the Overlay Toggle</h3>
+<p>The draw button toggles the overlay open and closed. One click handler checks if the overlay is visible — if yes, close it and clear the canvas. If no, open it.</p>
+<h3 id="step-23-implement-freehand-drawing">Step 2.3: Implement Freehand Drawing</h3>
+<p>Four event listeners on the drawing canvas:</p>
+<table>
+<thead>
+<tr>
+<th>EVENT</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mousedown</code></td>
+<td>Set <code>isDrawing = true</code>. Call <code>ctx.beginPath()</code>, then <code>ctx.moveTo(e.offsetX, e.offsetY)</code>.</td>
+</tr>
+<tr>
+<td><code>mousemove</code></td>
+<td>If <code>isDrawing</code> is false, return early. Otherwise: <code>ctx.lineTo(e.offsetX, e.offsetY)</code>, then <code>ctx.stroke()</code>.</td>
+</tr>
+<tr>
+<td><code>mouseup</code></td>
+<td>Set <code>isDrawing = false</code>.</td>
+</tr>
+<tr>
+<td><code>mouseleave</code></td>
+<td>Set <code>isDrawing = false</code>.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note:</strong> The mouse event listeners need the <code>e</code> parameter for <code>e.offsetX</code> and <code>e.offsetY</code>. Other listeners (brush slider, color picker) can use the element variable directly instead.</p>
+</blockquote>
+<h3 id="step-24-color-picker">Step 2.4: Color Picker</h3>
+<p>Listener on <code>colorPicker</code> that sets <code>ctx.strokeStyle</code> to the picker's current value. Also resets <code>globalCompositeOperation</code> to <code>'source-over'</code> (switches back from eraser mode).</p>
+<h3 id="step-25-brush-size">Step 2.5: Brush Size</h3>
+<p>Listener on <code>brushSlider</code> that sets <code>ctx.lineWidth</code> to the slider's current value.</p>
+<h3 id="step-26-eraser">Step 2.6: Eraser</h3>
+<p>Click listener on <code>eraserBtn</code> that sets <code>ctx.globalCompositeOperation = 'destination-out'</code>. This erases to transparent. The color picker listener resets it back to <code>'source-over'</code> when a color is picked.</p>
+<h3 id="step-27-clear-button">Step 2.7: Clear Button</h3>
+<p>Click listener on <code>clearBtn</code> that calls <code>ctx.clearRect(0, 0, canvas.width, canvas.height)</code> then fills with white:</p>
+<pre><code class="language-javascript">ctx.fillStyle = 'white';
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+</code></pre>
+<blockquote>
+<p><strong>Test checkpoint:</strong>
+Open the overlay, draw with different colors and sizes, erase, clear. Everything should feel responsive on the large canvas.</p>
+</blockquote>
+<hr />
+<h2 id="phase-3-fish-spawning-swimming-fishjs">Phase 3 — Fish Spawning &amp; Swimming (fish.js)</h2>
+<h3 id="step-31-set-up-the-fish-canvas">Step 3.1: Set Up the Fish Canvas</h3>
+<ul>
+<li>Grab <code>#fishCanvas</code> with <code>getElementById</code></li>
+<li>Get its 2D context: <code>const fishCtx = fishCanvas.getContext('2d')</code></li>
+<li>Set the canvas <code>width</code> and <code>height</code> <strong>attributes</strong> to <code>window.innerWidth</code> and <code>window.innerHeight</code></li>
+<li>Add a <code>resize</code> event listener on <code>window</code> that updates these dimensions when the browser resizes</li>
+</ul>
+<blockquote>
+<p><strong>Important: Canvas Resolution vs CSS Size</strong>
+CSS <code>width: 100%</code> stretches the canvas visually, but the canvas internal resolution is set by its <code>width</code> and <code>height</code> attributes. If you only set CSS size, your fish will be blurry. You must set both.</p>
+</blockquote>
+<h3 id="step-32-create-the-arrays">Step 3.2: Create the Arrays</h3>
+<p>Two arrays:</p>
+<pre><code class="language-javascript">const fishArray = [];
+const spawnAnimations = [];
+</code></pre>
+<p><code>fishArray</code> holds active swimming fish. <code>spawnAnimations</code> holds bubble pop animations in progress.</p>
+<p>Each <strong>fish object</strong> has:</p>
+<table>
+<thead>
+<tr>
+<th>PROPERTY</th>
+<th>TYPE</th>
+<th>PURPOSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>The drawn fish as an Image object</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>String</td>
+<td>The name the user gave the fish</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>Number</td>
+<td>Current horizontal position</td>
+</tr>
+<tr>
+<td><code>y</code></td>
+<td>Number</td>
+<td>Current vertical position</td>
+</tr>
+<tr>
+<td><code>speedX</code></td>
+<td>Number</td>
+<td>Horizontal velocity (positive = right, negative = left)</td>
+</tr>
+<tr>
+<td><code>wobbleOffset</code></td>
+<td>Number</td>
+<td>Random offset so fish don't bob in sync</td>
+</tr>
+<tr>
+<td><code>width</code></td>
+<td>Number</td>
+<td>Rendered width on screen</td>
+</tr>
+<tr>
+<td><code>height</code></td>
+<td>Number</td>
+<td>Rendered height on screen</td>
+</tr>
+<tr>
+<td><code>targetX</code></td>
+<td>Number or null</td>
+<td>Bait target X (null = normal swimming)</td>
+</tr>
+<tr>
+<td><code>targetY</code></td>
+<td>Number or null</td>
+<td>Bait target Y (null = normal swimming)</td>
+</tr>
+<tr>
+<td><code>opacity</code></td>
+<td>Number</td>
+<td>Starts at 0, fades to 1 after spawn animation</td>
+</tr>
+</tbody>
+</table>
+<p>Each <strong>spawn animation object</strong> has:</p>
+<table>
+<thead>
+<tr>
+<th>PROPERTY</th>
+<th>TYPE</th>
+<th>PURPOSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bubbles</code></td>
+<td>Array</td>
+<td>8–12 bubble objects, each with x, y, radius, opacity, angle</td>
+</tr>
+<tr>
+<td><code>centerX</code></td>
+<td>Number</td>
+<td>Where the bubbles converge (fish spawn point X)</td>
+</tr>
+<tr>
+<td><code>centerY</code></td>
+<td>Number</td>
+<td>Where the bubbles converge (fish spawn point Y)</td>
+</tr>
+<tr>
+<td><code>phase</code></td>
+<td>Number</td>
+<td>1 = gathering, 2 = pop, 3 = done</td>
+</tr>
+<tr>
+<td><code>timer</code></td>
+<td>Number</td>
+<td>Frame counter for timing the phases</td>
+</tr>
+<tr>
+<td><code>fishData</code></td>
+<td>Object</td>
+<td>The fish object waiting to be spawned after animation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="step-33-wire-up-the-spawn-button">Step 3.3: Wire Up the Spawn Button</h3>
+<p>Add a click listener on <code>#spawnBtn</code> that does the following, in order:</p>
+<ol>
+<li><strong>Get the fish name:</strong> <code>const name = fishName.value || 'Unnamed Fish'</code></li>
+<li><strong>Export the drawing:</strong> <code>const dataURL = drawCanvas.toDataURL('image/png')</code></li>
+<li><strong>Create an Image object:</strong> <code>const img = new Image()</code> then <code>img.src = dataURL</code></li>
+<li><strong>Wait for the image to load:</strong> Everything below goes inside <code>img.onload = () =&gt; { ... }</code></li>
+<li><strong>Pick a random starting position:</strong></li>
+<li><code>x</code>: either <code>-100</code> (start offscreen left) or <code>canvas.width + 100</code> (start offscreen right)</li>
+<li><code>y</code>: random between <code>50</code> and <code>canvas.height - 150</code></li>
+<li><strong>Pick random movement values:</strong></li>
+<li><code>speedX</code>: random between <code>0.5</code> and <code>2.5</code>. If starting from the right side, make it negative.</li>
+<li><code>wobbleOffset</code>: random between <code>0</code> and <code>Math.PI * 2</code></li>
+<li><strong>Set dimensions:</strong> Scale the drawing down to about 80–120px wide. Maintain aspect ratio.</li>
+<li><strong>Create the fish object</strong> with all properties. Set <code>targetX</code> and <code>targetY</code> to <code>null</code>. Set <code>opacity</code> to <code>0</code> (fish starts invisible — the bubble animation reveals it).</li>
+<li><strong>Create a spawn animation</strong> instead of pushing the fish directly into <code>fishArray</code>:</li>
+<li>Generate 8–12 bubble objects around the spawn point (see Step 3.3b)</li>
+<li>Create a spawn animation object with <code>phase: 1</code>, <code>timer: 0</code>, and the fish data</li>
+<li>Push it into <code>spawnAnimations</code></li>
+<li><strong>Close the overlay</strong> and clear the draw canvas and name input.</li>
+</ol>
+<h3 id="step-33b-generating-spawn-bubbles">Step 3.3b: Generating Spawn Bubbles</h3>
+<p>For each of the 8–12 bubbles, create an object:</p>
+<pre><code class="language-javascript">{
+    x: centerX + (Math.random() - 0.5) * 120,   // scattered around spawn point
+    y: centerY + (Math.random() - 0.5) * 120,
+    radius: 4 + Math.random() * 8,               // random size 4–12px
+    opacity: 0.6 + Math.random() * 0.4,          // 0.6–1.0 opacity
+    angle: Math.random() * Math.PI * 2            // random direction for initial spread
+}
+</code></pre>
+<p>The bubbles start scattered in a ~120px radius around the spawn point.</p>
+<h3 id="step-34-build-the-animation-loop">Step 3.4: Build the Animation Loop</h3>
+<p>Create a function called <code>animate</code> that runs ~60 times per second. Every frame:</p>
+<ol>
+<li>
+<p><strong>Clear the entire fish canvas:</strong> <code>fishCtx.clearRect(0, 0, fishCanvas.width, fishCanvas.height)</code></p>
+</li>
+<li>
+<p><strong>Update and draw spawn animations</strong> (before drawing fish):</p>
+</li>
+</ol>
+<p>Loop through <code>spawnAnimations</code>. For each animation:</p>
+<p><strong>Phase 1 — Bubbles gather (60 frames / ~1 second):</strong>
+   - Move each bubble toward <code>centerX</code>/<code>centerY</code>:
+     <code>javascript
+     bubble.x += (anim.centerX - bubble.x) * 0.04;
+     bubble.y += (anim.centerY - bubble.y) * 0.04;</code>
+   - Add a slight wobble so they don't move in a straight line:
+     <code>javascript
+     bubble.x += Math.sin(anim.timer * 0.1 + bubble.angle) * 0.5;
+     bubble.y += Math.cos(anim.timer * 0.1 + bubble.angle) * 0.5;</code>
+   - Shrink bubbles slightly as they converge: <code>bubble.radius *= 0.995</code>
+   - Draw each bubble as a translucent white circle:
+     <code>javascript
+     fishCtx.beginPath();
+     fishCtx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+     fishCtx.fillStyle = 'rgba(255, 255, 255,' + bubble.opacity + ')';
+     fishCtx.fill();</code>
+   - Increment <code>anim.timer</code>. When <code>timer &gt; 60</code>, switch to phase 2.</p>
+<p><strong>Phase 2 — Pop burst (15 frames / ~0.25 seconds):</strong>
+   - Rapidly expand each bubble outward from center:
+     <code>javascript
+     const angle = Math.atan2(bubble.y - anim.centerY, bubble.x - anim.centerX);
+     bubble.x += Math.cos(angle) * 4;
+     bubble.y += Math.sin(angle) * 4;</code>
+   - Fade out quickly: <code>bubble.opacity -= 0.07</code>
+   - Draw a white flash circle at center that expands and fades:
+     <code>javascript
+     const flashRadius = (anim.timer - 60) * 4;
+     const flashOpacity = 1 - (anim.timer - 60) / 15;
+     fishCtx.beginPath();
+     fishCtx.arc(anim.centerX, anim.centerY, flashRadius, 0, Math.PI * 2);
+     fishCtx.fillStyle = 'rgba(255, 255, 255,' + flashOpacity + ')';
+     fishCtx.fill();</code>
+   - When <code>timer &gt; 75</code>, switch to phase 3.</p>
+<p><strong>Phase 3 — Fish revealed:</strong>
+   - Push <code>anim.fishData</code> into <code>fishArray</code>
+   - Remove this animation from <code>spawnAnimations</code></p>
+<ol>
+<li><strong>Loop through <code>fishArray</code></strong> and for each fish, update its position and draw it:</li>
+</ol>
+<p><strong>Fade in after spawn:</strong> If <code>fish.opacity &lt; 1</code>, increment it: <code>fish.opacity += 0.05</code>. Apply opacity when drawing:
+   <code>javascript
+   fishCtx.globalAlpha = fish.opacity;
+   // draw the fish...
+   fishCtx.globalAlpha = 1;  // reset for next fish</code></p>
+<p><strong>Position update (normal swimming):</strong>
+   <code>javascript
+   fish.x += fish.speedX
+   fish.y += Math.sin(Date.now() * 0.002 + fish.wobbleOffset) * 0.5</code></p>
+<p><strong>Edge detection:</strong>
+   <code>javascript
+   if (fish.x &gt; fishCanvas.width + fish.width) fish.speedX *= -1;
+   if (fish.x &lt; -fish.width) fish.speedX *= -1;</code></p>
+<p><strong>Draw the fish:</strong> (see Step 3.5 for the flip logic)</p>
+<ol>
+<li><strong>Request the next frame:</strong> <code>requestAnimationFrame(animate)</code></li>
+</ol>
+<p>Kick off the loop by calling <code>animate()</code> once when the page loads.</p>
+<blockquote>
+<p><strong>What is <code>requestAnimationFrame</code>?</strong>
+The browser's built-in "call this function on the next screen refresh" method. Runs at ~60fps, automatically pauses when the tab isn't visible.</p>
+</blockquote>
+<h3 id="step-35-the-flip-logic-in-detail">Step 3.5: The Flip Logic in Detail</h3>
+<p>When a fish swims left, the image needs to be mirrored horizontally.</p>
+<p><strong>When going left (<code>fish.speedX &lt; 0</code>):</strong></p>
+<pre><code class="language-javascript">fishCtx.save();
+fishCtx.translate(fish.x + fish.width, fish.y);
+fishCtx.scale(-1, 1);
+fishCtx.drawImage(fish.image, 0, 0, fish.width, fish.height);
+fishCtx.restore();
+</code></pre>
+<p><strong>When going right (<code>fish.speedX &gt; 0</code>):</strong></p>
+<pre><code class="language-javascript">fishCtx.drawImage(fish.image, fish.x, fish.y, fish.width, fish.height);
+</code></pre>
+<p><code>ctx.save()</code> and <code>ctx.restore()</code> ensure the transform only affects this one fish.</p>
+<h3 id="step-36-display-fish-names-optional">Step 3.6: Display Fish Names (Optional)</h3>
+<p>After drawing each fish, render its name below:</p>
+<pre><code class="language-javascript">fishCtx.fillStyle = 'white';
+fishCtx.font = '12px Arial';
+fishCtx.textAlign = 'center';
+fishCtx.fillText(fish.name, fish.x + fish.width / 2, fish.y + fish.height + 15);
+</code></pre>
+<blockquote>
+<p><strong>Major test checkpoint:</strong>
+Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts swimming with its name, bobbing up and down, flipping at the edges. Spawn multiple fish — each should get its own bubble pop animation. <strong>If this works, the hard part is done.</strong></p>
+</blockquote>
+<hr />
+<h2 id="phase-4-ocean-backgrounds-mode-system">Phase 4 — Ocean Backgrounds &amp; Mode System</h2>
+<h3 id="step-41-create-your-art">Step 4.1: Create Your Art</h3>
+<p>Open Procreate, Figma, or whatever design tool you prefer.</p>
+<p><strong>You need art for at least two modes:</strong></p>
+<h4 id="standard-ocean-mode">Standard Ocean Mode</h4>
+<p>Resolution: 1920×1080 or larger, exported as PNG or JPEG.</p>
+<p>For animated depth, split into 2–3 layers:</p>
+<table>
+<thead>
+<tr>
+<th>LAYER FILE</th>
+<th>CONTENT</th>
+<th>ANIMATION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bg-deep.png</code></td>
+<td>Far background — deep water, gradient, distant elements</td>
+<td>None (stays still)</td>
+</tr>
+<tr>
+<td><code>bg-foreground.png</code></td>
+<td>Close-up elements — coral, sand floor, seaweed, rocks</td>
+<td>Slow horizontal sway</td>
+</tr>
+<tr>
+<td><code>bg-light.png</code></td>
+<td>Light rays / caustics (transparency as PNG)</td>
+<td>Opacity pulse</td>
+</tr>
+</tbody>
+</table>
+<p>Save into <code>assets/backgrounds/ocean/</code>.</p>
+<h4 id="pixel-art-mode">Pixel Art Mode</h4>
+<p>Resolution: <strong>320×180</strong> — draw at this tiny resolution intentionally. The browser scales it up with hard pixel edges.</p>
+<table>
+<thead>
+<tr>
+<th>LAYER FILE</th>
+<th>CONTENT</th>
+<th>ANIMATION</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pixel-bg.png</code></td>
+<td>Full pixel art ocean scene at 320×180</td>
+<td>None or subtle sway</td>
+</tr>
+</tbody>
+</table>
+<p>Save into <code>assets/backgrounds/pixel/</code>.</p>
+<h3 id="step-42-add-a-mode-toggle">Step 4.2: Add a Mode Toggle</h3>
+<p>Add a mode toggle button to your HTML:</p>
+<pre><code class="language-html">&lt;button id=&quot;modeToggle&quot;&gt;Switch Mode&lt;/button&gt;
+</code></pre>
+<h3 id="step-43-add-image-layers-to-html">Step 4.3: Add Image Layers to HTML</h3>
+<p>Inside <code>&lt;div id="ocean"&gt;</code>, add <code>&lt;img&gt;</code> tags for each layer with classes like <code>ocean-layer-deep</code>, <code>ocean-layer-fg</code>, <code>ocean-layer-light</code>.</p>
+<h3 id="step-44-style-the-layers">Step 4.4: Style the Layers</h3>
+<pre><code class="language-css">.ocean-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+</code></pre>
+<h3 id="step-45-pixel-mode-css">Step 4.5: Pixel Mode CSS</h3>
+<pre><code class="language-css">body.pixel-mode #ocean img {
+    image-rendering: pixelated;
+}
+
+body.pixel-mode #fishCanvas {
+    image-rendering: pixelated;
+}
+
+body.pixel-mode #drawCanvas {
+    image-rendering: pixelated;
+}
+</code></pre>
+<h3 id="step-46-mode-switching-logic-javascript">Step 4.6: Mode Switching Logic (JavaScript)</h3>
+<p>The mode toggle button click does:
+1. Toggle a class on <code>&lt;body&gt;</code> (e.g. <code>"pixel-mode"</code>)
+2. Show/hide the correct background images
+3. Optionally adjust the draw canvas resolution
+4. Save the current mode to Chrome storage so it persists</p>
+<h3 id="step-47-animate-with-css-keyframes">Step 4.7: Animate with CSS Keyframes</h3>
+<p><strong>Sway animation (foreground):</strong></p>
+<pre><code class="language-css">@keyframes sway {
+    0%   { transform: translateX(-5px); }
+    100% { transform: translateX(5px); }
+}
+
+.ocean-layer-fg {
+    animation: sway 6s ease-in-out infinite alternate;
+}
+</code></pre>
+<p><strong>Light pulse (light rays):</strong></p>
+<pre><code class="language-css">@keyframes lightPulse {
+    0%   { opacity: 0.25; }
+    100% { opacity: 0.5; }
+}
+
+.ocean-layer-light {
+    animation: lightPulse 4s ease-in-out infinite alternate;
+}
+</code></pre>
+<blockquote>
+<p><strong>Test checkpoint:</strong>
+Your art fills the screen with subtle animation. Fish swim on top. Toggle between modes — backgrounds swap and pixel mode renders with hard pixel edges.</p>
+</blockquote>
+<hr />
+<h2 id="phase-5-bait-feature">Phase 5 — Bait Feature</h2>
+<h3 id="step-51-bait-mode-toggle">Step 5.1: Bait Mode Toggle</h3>
+<p>Variable: <code>let baitMode = false</code></p>
+<p>Click listener on <code>#baitBucket</code>:
+1. Set <code>baitMode = true</code>
+2. Change cursor on <code>#fishCanvas</code> to <code>crosshair</code>
+3. Set <code>fishCanvas.style.pointerEvents = 'auto'</code></p>
+<h3 id="step-52-ocean-canvas-click-handler">Step 5.2: Ocean Canvas Click Handler</h3>
+<p>Click listener on <code>#fishCanvas</code>:
+1. Guard: if <code>baitMode</code> is false, return
+2. Get click coordinates from event
+3. Find closest fish (loop through <code>fishArray</code>, calculate distances)
+4. Set <code>closestFish.targetX</code> and <code>targetY</code> to click position
+5. Reset bait mode, cursor, and pointer-events</p>
+<h3 id="step-53-update-the-animation-loop">Step 5.3: Update the Animation Loop</h3>
+<p>For each fish, before normal swimming, check if <code>fish.targetX !== null</code>:</p>
+<p><strong>If chasing bait:</strong>
+1. Calculate angle: <code>Math.atan2(fish.targetY - fish.y, fish.targetX - fish.x)</code>
+2. Rush speed: <code>6</code>
+3. Move toward target using <code>Math.cos</code>/<code>Math.sin</code>
+4. Flip based on target direction
+5. If distance &lt; 15px: clear target, resume normal speed</p>
+<p><strong>Else:</strong> Normal swimming (wobble + drift).</p>
+<blockquote>
+<p><strong>Test checkpoint:</strong>
+Spawn fish, click bait bucket, click ocean. Nearest fish darts to that spot then resumes swimming.</p>
+</blockquote>
+<p><strong>Optional polish:</strong>
+- Right-click anywhere drops bait (skip the bucket)
+- All nearby fish react within a radius
+- Shrinking circle visual at click point
+- Fish scales up ~10% briefly when reaching bait</p>
+<hr />
+<h2 id="phase-6-persistence-storagejs">Phase 6 — Persistence (storage.js)</h2>
+<h3 id="step-61-save-function">Step 6.1: Save Function</h3>
+<p><code>saveFish()</code> maps <code>fishArray</code> to serializable objects:</p>
+<pre><code class="language-javascript">{
+    dataURL:      fish.image.src,
+    name:         fish.name,
+    x:            fish.x,
+    y:            fish.y,
+    speedX:       fish.speedX,
+    wobbleOffset: fish.wobbleOffset,
+    width:        fish.width,
+    height:       fish.height
+}
+</code></pre>
+<p>Save with <code>chrome.storage.local.set({ fish: serializedArray })</code>.</p>
+<p>Call after every spawn.</p>
+<h3 id="step-62-load-function">Step 6.2: Load Function</h3>
+<p><code>loadFish()</code>:
+1. <code>chrome.storage.local.get('fish', callback)</code>
+2. Loop through saved fish, create <code>Image</code> objects, push into <code>fishArray</code> inside <code>img.onload</code></p>
+<p>Call on page load, before starting the animation loop.</p>
+<h3 id="step-63-save-mode-preference">Step 6.3: Save Mode Preference</h3>
+<pre><code class="language-javascript">chrome.storage.local.set({ mode: currentMode })
+</code></pre>
+<p>Load on startup and apply the correct body class.</p>
+<h3 id="step-64-delete-a-fish">Step 6.4: Delete a Fish</h3>
+<table>
+<thead>
+<tr>
+<th>METHOD</th>
+<th>IMPLEMENTATION</th>
+<th>COMPLEXITY</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>"Clear all fish" button</strong></td>
+<td>Empty <code>fishArray</code>, call <code>chrome.storage.local.remove('fish')</code></td>
+<td>Easy — do this for v1</td>
+</tr>
+<tr>
+<td><strong>Right-click a fish</strong></td>
+<td>Find nearest fish, remove from array, save</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td><strong>Drag to trash icon</strong></td>
+<td>Skip for v1</td>
+<td>Hard</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Test checkpoint:</strong>
+Spawn fish, close tab, open new tab. Fish reappear with names. Mode persists.</p>
+</blockquote>
+<hr />
+<h2 id="phase-7-bubbles-bubblesjs-optional-polish">Phase 7 — Bubbles (bubbles.js) — Optional Polish</h2>
+<h3 id="step-71-bubble-array">Step 7.1: Bubble Array</h3>
+<p>Each bubble: <code>x</code>, <code>y</code>, <code>radius</code> (2–6px), <code>speedY</code> (0.3–1.0), <code>drift</code>. Spawn 20–30 on page load.</p>
+<h3 id="step-72-animate-bubbles">Step 7.2: Animate Bubbles</h3>
+<table>
+<thead>
+<tr>
+<th>APPROACH</th>
+<th>HOW</th>
+<th>PROS/CONS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Add to fish canvas loop</strong></td>
+<td>Draw translucent white circles with <code>fishCtx.arc()</code></td>
+<td>Simple, no extra elements.</td>
+</tr>
+<tr>
+<td><strong>Separate canvas</strong></td>
+<td>Third canvas between ocean and fish</td>
+<td>Clean separation.</td>
+</tr>
+<tr>
+<td><strong>CSS-animated divs</strong></td>
+<td>Small round <code>&lt;div&gt;</code>s animated with <code>@keyframes</code></td>
+<td>Easiest. Recommended.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="phase-8-custom-ui-button-art">Phase 8 — Custom UI &amp; Button Art</h2>
+<h3 id="step-81-draw-your-buttons-in-procreate">Step 8.1: Draw Your Buttons in Procreate</h3>
+<p>Design custom art for: draw button, toolbar buttons (eraser, clear, spawn), bait bucket, mode toggle. Export as PNG with transparency into <code>assets/ui/</code>. Draw pixel variants for pixel mode.</p>
+<h3 id="step-82-apply-custom-button-art-with-css">Step 8.2: Apply Custom Button Art with CSS</h3>
+<pre><code class="language-css">#drawBtn {
+    border: none;
+    background: url('../assets/ui/draw-btn.png') center/contain no-repeat;
+}
+
+body.pixel-mode #drawBtn {
+    background-image: url('../assets/ui/pixel/draw-btn.png');
+    image-rendering: pixelated;
+}
+</code></pre>
+<h3 id="step-83-hover-active-states">Step 8.3: Hover &amp; Active States</h3>
+<pre><code class="language-css">#drawBtn:hover { transform: scale(1.1); }
+#drawBtn:active { transform: scale(0.95); }
+</code></pre>
+<blockquote>
+<p><strong>Test checkpoint:</strong>
+All buttons display custom art. Hover/click feel responsive. Pixel mode swaps to pixel art buttons.</p>
+</blockquote>
+<hr />
+<h2 id="layer-stack-z-index-order">Layer Stack &amp; Z-Index Order</h2>
+<pre><code>┌────────────────────────────────────────────────┐
+│ z-index: 0   Ocean background images (your art)│
+│ z-index: 1   Fish canvas (transparent,fullscreen)│
+│ z-index: 2   Bubbles (if using divs/extra canvas)│
+│ z-index: 5   Bait bucket                        │
+│ z-index: 20  Drawing overlay (when open)         │
+│ z-index: 21  Floating draw button (always on top)│
+└────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Aquarium view (normal):</strong></p>
+<pre><code>┌────────────────────────────────────────────────┐
+│  bg-deep.png  (static)                         │
+│    ↕ bg-foreground.png (slow sway ~5px)        │
+│      ✨ bg-light.png (opacity pulse)           │
+│                                                │
+│     🫧 ← bubbles converge                      │
+│     💥 ← pop! flash of light                   │
+│        🐟 &quot;Nemo&quot; fades in, starts swimming     │
+│        🐟 &quot;Bubbles&quot; swimming on canvas         │
+│        🫧 ambient bubbles floating up          │
+│                                                │
+│  🪣 bait bucket                          [+]   │
+│                               (draw button) ↗  │
+└────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>Drawing overlay (when open):</strong></p>
+<pre><code>┌────────────────────────────────────────────────┐
+│ [Name: ___] [🎨] [━━━] [Eraser] [Clear] [Spawn]│
+│                                                │
+│  ┌──────────────────────────────────────────┐  │
+│  │                                          │  │
+│  │                                          │  │
+│  │         (large white drawing canvas)     │  │
+│  │         draw your fish here              │  │
+│  │                                          │  │
+│  │                                          │  │
+│  └──────────────────────────────────────────┘  │
+│                                          [+]   │
+│                          (click to close) ↗    │
+└────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="milestone-checklist">Milestone Checklist</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>MILESTONE</th>
+<th>HOW TO VERIFY</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Extension loads, dark screen + floating draw button</td>
+<td>New tab shows dark blue background with round <code>+</code> button</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Draw button toggles fullscreen overlay open/closed</td>
+<td>Click <code>+</code> → overlay appears. Click again → disappears.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Can draw on large canvas with colors/sizes/eraser/clear</td>
+<td>Freehand drawing works in the overlay with all controls</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Spawn triggers bubble pop animation then fish appears</td>
+<td>Draw, name, spawn → overlay closes, bubbles converge, pop, fish fades in</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Fish swim with name, wobble, and flip at edges</td>
+<td>Multiple fish move independently with different speeds</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Ocean art shows as background with CSS animation</td>
+<td>Hand-drawn art fills screen with subtle sway and light pulse</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Mode toggle switches between standard and pixel art</td>
+<td>Backgrounds swap, pixel mode renders with hard pixel edges</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Bait click makes nearest fish dart to cursor position</td>
+<td>Fish rushes to click point then resumes normal swimming</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Fish, names, and mode persist across new tabs</td>
+<td>Close tab, open new one — everything preserved</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Ambient bubbles float upward</td>
+<td>Translucent circles rise from bottom of screen</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Custom button art replaces browser defaults</td>
+<td>Procreate art on all buttons with pixel variants</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quick-reference-key-apis-youll-use">Quick Reference — Key APIs You'll Use</h2>
+<h3 id="canvas-2d-context">Canvas 2D Context</h3>
+<table>
+<thead>
+<tr>
+<th>METHOD / PROPERTY</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>getContext('2d')</code></td>
+<td>Gets the 2D drawing context from a canvas element</td>
+</tr>
+<tr>
+<td><code>beginPath()</code></td>
+<td>Starts a new drawing path</td>
+</tr>
+<tr>
+<td><code>moveTo(x, y)</code></td>
+<td>Moves the pen without drawing</td>
+</tr>
+<tr>
+<td><code>lineTo(x, y)</code></td>
+<td>Draws a line to (x, y)</td>
+</tr>
+<tr>
+<td><code>stroke()</code></td>
+<td>Renders the current path as a visible line</td>
+</tr>
+<tr>
+<td><code>clearRect(x, y, w, h)</code></td>
+<td>Erases a rectangular area</td>
+</tr>
+<tr>
+<td><code>drawImage(img, x, y, w, h)</code></td>
+<td>Draws an image onto the canvas</td>
+</tr>
+<tr>
+<td><code>arc(x, y, radius, start, end)</code></td>
+<td>Draws a circle/arc (used for bubbles)</td>
+</tr>
+<tr>
+<td><code>fill()</code></td>
+<td>Fills the current path with color</td>
+</tr>
+<tr>
+<td><code>save()</code> / <code>restore()</code></td>
+<td>Saves/restores the current transform state</td>
+</tr>
+<tr>
+<td><code>translate(x, y)</code></td>
+<td>Moves the canvas origin point</td>
+</tr>
+<tr>
+<td><code>scale(x, y)</code></td>
+<td>Scales drawing. <code>scale(-1, 1)</code> flips horizontally</td>
+</tr>
+<tr>
+<td><code>toDataURL('image/png')</code></td>
+<td>Exports canvas content as a base64 PNG string</td>
+</tr>
+<tr>
+<td><code>strokeStyle</code></td>
+<td>Sets the line/stroke color</td>
+</tr>
+<tr>
+<td><code>fillStyle</code></td>
+<td>Sets the fill color (for shapes and text)</td>
+</tr>
+<tr>
+<td><code>lineWidth</code></td>
+<td>Sets line thickness in pixels</td>
+</tr>
+<tr>
+<td><code>lineCap</code></td>
+<td>Sets line end shape (<code>'round'</code>)</td>
+</tr>
+<tr>
+<td><code>fillText(text, x, y)</code></td>
+<td>Draws text on the canvas</td>
+</tr>
+<tr>
+<td><code>globalCompositeOperation</code></td>
+<td>Controls blending (<code>'destination-out'</code> for eraser)</td>
+</tr>
+<tr>
+<td><code>globalAlpha</code></td>
+<td>Sets opacity for all drawing (0 = invisible, 1 = fully visible)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="dom-events">DOM &amp; Events</h3>
+<table>
+<thead>
+<tr>
+<th>METHOD</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>document.getElementById('id')</code></td>
+<td>Finds an HTML element by its ID</td>
+</tr>
+<tr>
+<td><code>element.addEventListener('event', function)</code></td>
+<td>Runs code when event happens</td>
+</tr>
+<tr>
+<td><code>element.style.display = 'flex'</code></td>
+<td>Shows a hidden element</td>
+</tr>
+<tr>
+<td><code>element.style.display = 'none'</code></td>
+<td>Hides an element</td>
+</tr>
+<tr>
+<td><code>element.classList.toggle('class')</code></td>
+<td>Adds/removes a CSS class</td>
+</tr>
+</tbody>
+</table>
+<h3 id="math-functions-for-animation">Math Functions for Animation</h3>
+<table>
+<thead>
+<tr>
+<th>FUNCTION</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Math.sin(value)</code></td>
+<td>Returns -1 to 1 in a wave. Swimming wobble + bubble wobble.</td>
+</tr>
+<tr>
+<td><code>Math.cos(value)</code></td>
+<td>X-component of movement in a direction</td>
+</tr>
+<tr>
+<td><code>Math.atan2(dy, dx)</code></td>
+<td>Angle from one point to another. Bait chasing + bubble pop direction.</td>
+</tr>
+<tr>
+<td><code>Math.sqrt(x**2 + y**2)</code></td>
+<td>Distance between two points</td>
+</tr>
+<tr>
+<td><code>Math.random()</code></td>
+<td>Random 0–1. Used for spawn positions, bubble sizes, speeds.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="chrome-extension-apis">Chrome Extension APIs</h3>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chrome.storage.local.set({ key: value })</code></td>
+<td>Saves data persistently</td>
+</tr>
+<tr>
+<td><code>chrome.storage.local.get('key', callback)</code></td>
+<td>Retrieves saved data</td>
+</tr>
+<tr>
+<td><code>chrome.storage.local.remove('key')</code></td>
+<td>Deletes saved data</td>
+</tr>
+</tbody>
+</table>
+<h3 id="browser-animation">Browser Animation</h3>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requestAnimationFrame(callback)</code></td>
+<td>Runs function on next screen refresh (~60fps)</td>
+</tr>
+<tr>
+<td><code>Date.now()</code></td>
+<td>Current timestamp in ms. Input for <code>Math.sin()</code> time-based animation.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="css-pixel-art-mode">CSS Pixel Art Mode</h3>
+<table>
+<thead>
+<tr>
+<th>PROPERTY</th>
+<th>WHAT IT DOES</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>image-rendering: pixelated</code></td>
+<td>Scales images with hard pixel edges</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
