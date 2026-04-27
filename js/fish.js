@@ -26,7 +26,5 @@ img.onload = function(){
     const x = startFromLeft ? -100: fishCanvas.width + 100 // start from the left or the right, if cooinflip is  ture start from left, if not start from right, both ofscreen
     const y = Math.random() * (fishCanvas.height - 200) + 50; // starts from random y position, but dumber between canvas (hight -200)+ 50, so it't not too close to the edge
 
-    // random movement
-    
 
 }

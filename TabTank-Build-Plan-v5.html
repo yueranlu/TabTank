@@ -1,8 +1,5 @@
 <!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
+<html><head><meta charset="utf-8"><style>
 @page { size: A4; margin: 2.5cm 2cm; }
 body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #2c3e50; background: white; }
 h1 { font-size: 36px; color: #1a3a5c; border-bottom: 4px solid #1a3a5c; padding-bottom: 16px; margin-top: 40px; margin-bottom: 30px; }
@@ -23,9 +20,7 @@ ul, ol { padding-left: 24px; margin-bottom: 12px; }
 li { margin-bottom: 6px; }
 hr { border: none; border-top: 2px solid #e2e8f0; margin: 30px 0; }
 strong { color: #1a3a5c; }
-</style>
-</head>
-<body>
+</style></head><body>
 <h1 id="tabtank-updated-build-plan-v4">TabTank — Updated Build Plan (v4)</h1>
 <p><strong>Turn your new tab into an aquarium. Draw your own fish and watch them swim.</strong></p>
 <p>Complete Build Plan — Chrome Extension</p>
@@ -324,14 +319,34 @@ const spawnAnimations = [];
 <td>Current vertical position</td>
 </tr>
 <tr>
-<td><code>speedX</code></td>
+<td><code>destX</code></td>
 <td>Number</td>
-<td>Horizontal velocity (positive = right, negative = left)</td>
+<td>Destination X — the point the fish is swimming toward</td>
+</tr>
+<tr>
+<td><code>destY</code></td>
+<td>Number</td>
+<td>Destination Y — the point the fish is swimming toward</td>
+</tr>
+<tr>
+<td><code>speed</code></td>
+<td>Number</td>
+<td>How fast the fish swims (0.5–2.5, varies per fish)</td>
 </tr>
 <tr>
 <td><code>wobbleOffset</code></td>
 <td>Number</td>
 <td>Random offset so fish don't bob in sync</td>
+</tr>
+<tr>
+<td><code>wobbleSpeed</code></td>
+<td>Number</td>
+<td>How fast this fish wobbles (0.001–0.004, varies per fish)</td>
+</tr>
+<tr>
+<td><code>wobbleAmount</code></td>
+<td>Number</td>
+<td>How much this fish wobbles (0.3–1.0, varies per fish)</td>
 </tr>
 <tr>
 <td><code>width</code></td>
@@ -360,6 +375,7 @@ const spawnAnimations = [];
 </tr>
 </tbody>
 </table>
+<p><strong>How movement works:</strong> Instead of swimming in a straight horizontal line, each fish has a <strong>destination point</strong> (<code>destX</code>, <code>destY</code>) somewhere on screen. The fish swims toward that point. When it gets close, a new random destination is picked. This makes fish wander all over the tank naturally — different directions, different heights, different speeds. Each fish also has its own wobble speed and amplitude, so no two fish move the same way.</p>
 <p>Each <strong>spawn animation object</strong> has:</p>
 <table>
 <thead>
@@ -410,11 +426,16 @@ const spawnAnimations = [];
 <li><strong>Create an Image object:</strong> <code>const img = new Image()</code> then <code>img.src = dataURL</code></li>
 <li><strong>Wait for the image to load:</strong> Everything below goes inside <code>img.onload = () =&gt; { ... }</code></li>
 <li><strong>Pick a random starting position:</strong></li>
-<li><code>x</code>: either <code>-100</code> (start offscreen left) or <code>canvas.width + 100</code> (start offscreen right)</li>
-<li><code>y</code>: random between <code>50</code> and <code>canvas.height - 150</code></li>
+<li><code>x</code>: either <code>-100</code> (start offscreen left) or <code>fishCanvas.width + 100</code> (start offscreen right)</li>
+<li><code>y</code>: random between <code>50</code> and <code>fishCanvas.height - 150</code></li>
+<li><strong>Pick a random first destination:</strong></li>
+<li><code>destX</code>: random between <code>50</code> and <code>fishCanvas.width - 100</code></li>
+<li><code>destY</code>: random between <code>50</code> and <code>fishCanvas.height - 150</code></li>
 <li><strong>Pick random movement values:</strong></li>
-<li><code>speedX</code>: random between <code>0.5</code> and <code>2.5</code>. If starting from the right side, make it negative.</li>
+<li><code>speed</code>: random between <code>0.5</code> and <code>2.5</code> (each fish has its own speed)</li>
 <li><code>wobbleOffset</code>: random between <code>0</code> and <code>Math.PI * 2</code></li>
+<li><code>wobbleSpeed</code>: random between <code>0.001</code> and <code>0.004</code> (how fast it bobs)</li>
+<li><code>wobbleAmount</code>: random between <code>0.3</code> and <code>1.0</code> (how much it bobs)</li>
 <li><strong>Set dimensions:</strong> Scale the drawing down to about 80–120px wide. Maintain aspect ratio.</li>
 <li><strong>Create the fish object</strong> with all properties. Set <code>targetX</code> and <code>targetY</code> to <code>null</code>. Set <code>opacity</code> to <code>0</code> (fish starts invisible — the bubble animation reveals it).</li>
 <li><strong>Create a spawn animation</strong> instead of pushing the fish directly into <code>fishArray</code>:</li>
@@ -489,14 +510,27 @@ const spawnAnimations = [];
    fishCtx.globalAlpha = fish.opacity;
    // draw the fish...
    fishCtx.globalAlpha = 1;  // reset for next fish</code></p>
-<p><strong>Position update (normal swimming):</strong>
+<p><strong>Position update (destination-based swimming):</strong></p>
+<p>Calculate direction and distance to destination:
    <code>javascript
-   fish.x += fish.speedX
-   fish.y += Math.sin(Date.now() * 0.002 + fish.wobbleOffset) * 0.5</code></p>
-<p><strong>Edge detection:</strong>
+   const dx = fish.destX - fish.x;
+   const dy = fish.destY - fish.y;
+   const distance = Math.sqrt(dx * dx + dy * dy);</code></p>
+<p>Move toward destination:
    <code>javascript
-   if (fish.x &gt; fishCanvas.width + fish.width) fish.speedX *= -1;
-   if (fish.x &lt; -fish.width) fish.speedX *= -1;</code></p>
+   fish.x += (dx / distance) * fish.speed;
+   fish.y += (dy / distance) * fish.speed;</code>
+   <code>dx / distance</code> and <code>dy / distance</code> normalize the direction so the fish moves at a consistent speed regardless of how far away the target is.</p>
+<p>Add wobble on top (so the fish doesn't move in a perfectly straight line):
+   <code>javascript
+   fish.y += Math.sin(Date.now() * fish.wobbleSpeed + fish.wobbleOffset) * fish.wobbleAmount;</code></p>
+<p><strong>Pick new destination when fish arrives:</strong>
+   <code>javascript
+   if (distance &lt; 20) {
+       fish.destX = 50 + Math.random() * (fishCanvas.width - 100);
+       fish.destY = 50 + Math.random() * (fishCanvas.height - 150);
+   }</code>
+   When the fish gets within 20px of its destination, a new random point is chosen. The fish turns and swims there. This creates natural wandering behavior — each fish roams all over the tank independently.</p>
 <p><strong>Draw the fish:</strong> (see Step 3.5 for the flip logic)</p>
 <ol>
 <li><strong>Request the next frame:</strong> <code>requestAnimationFrame(animate)</code></li>
@@ -507,18 +541,18 @@ const spawnAnimations = [];
 The browser's built-in "call this function on the next screen refresh" method. Runs at ~60fps, automatically pauses when the tab isn't visible.</p>
 </blockquote>
 <h3 id="step-35-the-flip-logic-in-detail">Step 3.5: The Flip Logic in Detail</h3>
-<p>When a fish swims left, the image needs to be mirrored horizontally.</p>
-<p><strong>When going left (<code>fish.speedX &lt; 0</code>):</strong></p>
+<p>When a fish swims left, the image needs to be mirrored horizontally. Since fish now swim toward destinations instead of a fixed horizontal direction, base the flip on <strong>whether the destination is to the left or right</strong> of the fish.</p>
+<p><strong>When swimming left (<code>fish.destX &lt; fish.x</code>):</strong></p>
 <pre><code class="language-javascript">fishCtx.save();
 fishCtx.translate(fish.x + fish.width, fish.y);
 fishCtx.scale(-1, 1);
 fishCtx.drawImage(fish.image, 0, 0, fish.width, fish.height);
 fishCtx.restore();
 </code></pre>
-<p><strong>When going right (<code>fish.speedX &gt; 0</code>):</strong></p>
+<p><strong>When swimming right (<code>fish.destX &gt;= fish.x</code>):</strong></p>
 <pre><code class="language-javascript">fishCtx.drawImage(fish.image, fish.x, fish.y, fish.width, fish.height);
 </code></pre>
-<p><code>ctx.save()</code> and <code>ctx.restore()</code> ensure the transform only affects this one fish.</p>
+<p><code>ctx.save()</code> and <code>ctx.restore()</code> ensure the transform only affects this one fish. The fish now faces the direction it's actually swimming — toward its current destination.</p>
 <h3 id="step-36-display-fish-names-optional">Step 3.6: Display Fish Names (Optional)</h3>
 <p>After drawing each fish, render its name below:</p>
 <pre><code class="language-javascript">fishCtx.fillStyle = 'white';
@@ -528,7 +562,7 @@ fishCtx.fillText(fish.name, fish.x + fish.width / 2, fish.y + fish.height + 15);
 </code></pre>
 <blockquote>
 <p><strong>Major test checkpoint:</strong>
-Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts swimming with its name, bobbing up and down, flipping at the edges. Spawn multiple fish — each should get its own bubble pop animation. <strong>If this works, the hard part is done.</strong></p>
+Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts wandering around the tank with its name, swimming toward random destinations, wobbling naturally, and flipping to face the direction it's heading. Spawn multiple fish — each should wander independently with different speeds, wobble patterns, and destinations. <strong>If this works, the hard part is done.</strong></p>
 </blockquote>
 <hr />
 <h2 id="phase-4-ocean-backgrounds-mode-system">Phase 4 — Ocean Backgrounds &amp; Mode System</h2>
@@ -666,8 +700,8 @@ Your art fills the screen with subtle animation. Fish swim on top. Toggle betwee
 2. Rush speed: <code>6</code>
 3. Move toward target using <code>Math.cos</code>/<code>Math.sin</code>
 4. Flip based on target direction
-5. If distance &lt; 15px: clear target, resume normal speed</p>
-<p><strong>Else:</strong> Normal swimming (wobble + drift).</p>
+5. If distance &lt; 15px: clear target, pick a new random destination so the fish resumes wandering naturally</p>
+<p><strong>Else:</strong> Normal destination-based swimming (steer toward <code>destX</code>/<code>destY</code> with wobble).</p>
 <blockquote>
 <p><strong>Test checkpoint:</strong>
 Spawn fish, click bait bucket, click ocean. Nearest fish darts to that spot then resumes swimming.</p>
@@ -1110,6 +1144,4 @@ All buttons display custom art. Hover/click feel responsive. Pixel mode swaps to
 <td>Scales images with hard pixel edges</td>
 </tr>
 </tbody>
-</table>
-</body>
-</html>
+</table></body></html>

@@ -259,13 +259,19 @@ Each **fish object** has:
 | `name` | String | The name the user gave the fish |
 | `x` | Number | Current horizontal position |
 | `y` | Number | Current vertical position |
-| `speedX` | Number | Horizontal velocity (positive = right, negative = left) |
+| `destX` | Number | Destination X — the point the fish is swimming toward |
+| `destY` | Number | Destination Y — the point the fish is swimming toward |
+| `speed` | Number | How fast the fish swims (0.5–2.5, varies per fish) |
 | `wobbleOffset` | Number | Random offset so fish don't bob in sync |
+| `wobbleSpeed` | Number | How fast this fish wobbles (0.001–0.004, varies per fish) |
+| `wobbleAmount` | Number | How much this fish wobbles (0.3–1.0, varies per fish) |
 | `width` | Number | Rendered width on screen |
 | `height` | Number | Rendered height on screen |
 | `targetX` | Number or null | Bait target X (null = normal swimming) |
 | `targetY` | Number or null | Bait target Y (null = normal swimming) |
 | `opacity` | Number | Starts at 0, fades to 1 after spawn animation |
+
+**How movement works:** Instead of swimming in a straight horizontal line, each fish has a **destination point** (`destX`, `destY`) somewhere on screen. The fish swims toward that point. When it gets close, a new random destination is picked. This makes fish wander all over the tank naturally — different directions, different heights, different speeds. Each fish also has its own wobble speed and amplitude, so no two fish move the same way.
 
 Each **spawn animation object** has:
 
@@ -287,13 +293,18 @@ Add a click listener on `#spawnBtn` that does the following, in order:
 3. **Create an Image object:** `const img = new Image()` then `img.src = dataURL`
 4. **Wait for the image to load:** Everything below goes inside `img.onload = () => { ... }`
 5. **Pick a random starting position:**
-   - `x`: either `-100` (start offscreen left) or `canvas.width + 100` (start offscreen right)
-   - `y`: random between `50` and `canvas.height - 150`
-6. **Pick random movement values:**
-   - `speedX`: random between `0.5` and `2.5`. If starting from the right side, make it negative.
+   - `x`: either `-100` (start offscreen left) or `fishCanvas.width + 100` (start offscreen right)
+   - `y`: random between `50` and `fishCanvas.height - 150`
+6. **Pick a random first destination:**
+   - `destX`: random between `50` and `fishCanvas.width - 100`
+   - `destY`: random between `50` and `fishCanvas.height - 150`
+7. **Pick random movement values:**
+   - `speed`: random between `0.5` and `2.5` (each fish has its own speed)
    - `wobbleOffset`: random between `0` and `Math.PI * 2`
-7. **Set dimensions:** Scale the drawing down to about 80–120px wide. Maintain aspect ratio.
-8. **Create the fish object** with all properties. Set `targetX` and `targetY` to `null`. Set `opacity` to `0` (fish starts invisible — the bubble animation reveals it).
+   - `wobbleSpeed`: random between `0.001` and `0.004` (how fast it bobs)
+   - `wobbleAmount`: random between `0.3` and `1.0` (how much it bobs)
+8. **Set dimensions:** Scale the drawing down to about 80–120px wide. Maintain aspect ratio.
+9. **Create the fish object** with all properties. Set `targetX` and `targetY` to `null`. Set `opacity` to `0` (fish starts invisible — the bubble animation reveals it).
 9. **Create a spawn animation** instead of pushing the fish directly into `fishArray`:
    - Generate 8–12 bubble objects around the spawn point (see Step 3.3b)
    - Create a spawn animation object with `phase: 1`, `timer: 0`, and the fish data
@@ -379,17 +390,35 @@ Create a function called `animate` that runs ~60 times per second. Every frame:
    fishCtx.globalAlpha = 1;  // reset for next fish
    ```
 
-   **Position update (normal swimming):**
+   **Position update (destination-based swimming):**
+
+   Calculate direction and distance to destination:
    ```javascript
-   fish.x += fish.speedX
-   fish.y += Math.sin(Date.now() * 0.002 + fish.wobbleOffset) * 0.5
+   const dx = fish.destX - fish.x;
+   const dy = fish.destY - fish.y;
+   const distance = Math.sqrt(dx * dx + dy * dy);
    ```
 
-   **Edge detection:**
+   Move toward destination:
    ```javascript
-   if (fish.x > fishCanvas.width + fish.width) fish.speedX *= -1;
-   if (fish.x < -fish.width) fish.speedX *= -1;
+   fish.x += (dx / distance) * fish.speed;
+   fish.y += (dy / distance) * fish.speed;
    ```
+   `dx / distance` and `dy / distance` normalize the direction so the fish moves at a consistent speed regardless of how far away the target is.
+
+   Add wobble on top (so the fish doesn't move in a perfectly straight line):
+   ```javascript
+   fish.y += Math.sin(Date.now() * fish.wobbleSpeed + fish.wobbleOffset) * fish.wobbleAmount;
+   ```
+
+   **Pick new destination when fish arrives:**
+   ```javascript
+   if (distance < 20) {
+       fish.destX = 50 + Math.random() * (fishCanvas.width - 100);
+       fish.destY = 50 + Math.random() * (fishCanvas.height - 150);
+   }
+   ```
+   When the fish gets within 20px of its destination, a new random point is chosen. The fish turns and swims there. This creates natural wandering behavior — each fish roams all over the tank independently.
 
    **Draw the fish:** (see Step 3.5 for the flip logic)
 
@@ -402,9 +431,9 @@ Kick off the loop by calling `animate()` once when the page loads.
 
 ### Step 3.5: The Flip Logic in Detail
 
-When a fish swims left, the image needs to be mirrored horizontally.
+When a fish swims left, the image needs to be mirrored horizontally. Since fish now swim toward destinations instead of a fixed horizontal direction, base the flip on **whether the destination is to the left or right** of the fish.
 
-**When going left (`fish.speedX < 0`):**
+**When swimming left (`fish.destX < fish.x`):**
 ```javascript
 fishCtx.save();
 fishCtx.translate(fish.x + fish.width, fish.y);
@@ -413,12 +442,12 @@ fishCtx.drawImage(fish.image, 0, 0, fish.width, fish.height);
 fishCtx.restore();
 ```
 
-**When going right (`fish.speedX > 0`):**
+**When swimming right (`fish.destX >= fish.x`):**
 ```javascript
 fishCtx.drawImage(fish.image, fish.x, fish.y, fish.width, fish.height);
 ```
 
-`ctx.save()` and `ctx.restore()` ensure the transform only affects this one fish.
+`ctx.save()` and `ctx.restore()` ensure the transform only affects this one fish. The fish now faces the direction it's actually swimming — toward its current destination.
 
 ### Step 3.6: Display Fish Names (Optional)
 
@@ -432,7 +461,7 @@ fishCtx.fillText(fish.name, fish.x + fish.width / 2, fish.y + fish.height + 15);
 ```
 
 > **Major test checkpoint:**
-> Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts swimming with its name, bobbing up and down, flipping at the edges. Spawn multiple fish — each should get its own bubble pop animation. **If this works, the hard part is done.**
+> Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts wandering around the tank with its name, swimming toward random destinations, wobbling naturally, and flipping to face the direction it's heading. Spawn multiple fish — each should wander independently with different speeds, wobble patterns, and destinations. **If this works, the hard part is done.**
 
 ---
 
@@ -577,9 +606,9 @@ For each fish, before normal swimming, check if `fish.targetX !== null`:
 2. Rush speed: `6`
 3. Move toward target using `Math.cos`/`Math.sin`
 4. Flip based on target direction
-5. If distance < 15px: clear target, resume normal speed
+5. If distance < 15px: clear target, pick a new random destination so the fish resumes wandering naturally
 
-**Else:** Normal swimming (wobble + drift).
+**Else:** Normal destination-based swimming (steer toward `destX`/`destY` with wobble).
 
 > **Test checkpoint:**
 > Spawn fish, click bait bucket, click ocean. Nearest fish darts to that spot then resumes swimming.
