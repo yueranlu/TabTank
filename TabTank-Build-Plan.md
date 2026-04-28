@@ -240,16 +240,13 @@ ctx.fillRect(0, 0, canvas.width, canvas.height);
 > **Important: Canvas Resolution vs CSS Size**
 > CSS `width: 100%` stretches the canvas visually, but the canvas internal resolution is set by its `width` and `height` attributes. If you only set CSS size, your fish will be blurry. You must set both.
 
-### Step 3.2: Create the Arrays
-
-Two arrays:
+### Step 3.2: Create the Fish Array
 
 ```javascript
 const fishArray = [];
-const spawnAnimations = [];
 ```
 
-`fishArray` holds active swimming fish. `spawnAnimations` holds bubble pop animations in progress.
+`fishArray` holds all fish — both those currently dropping in and those swimming normally.
 
 Each **fish object** has:
 
@@ -269,20 +266,14 @@ Each **fish object** has:
 | `height` | Number | Rendered height on screen |
 | `targetX` | Number or null | Bait target X (null = normal swimming) |
 | `targetY` | Number or null | Bait target Y (null = normal swimming) |
-| `opacity` | Number | Starts at 0, fades to 1 after spawn animation |
+| `opacity` | Number | Starts at 0, fades to 1 during drop-in |
+| `spawning` | Boolean | `true` while fish is dropping in, `false` once swimming normally |
+| `velocityY` | Number | Vertical velocity during drop-in (increases with gravity) |
+| `targetSpawnY` | Number | The y position the fish is falling toward |
 
 **How movement works:** Instead of swimming in a straight horizontal line, each fish has a **destination point** (`destX`, `destY`) somewhere on screen. The fish swims toward that point. When it gets close, a new random destination is picked. This makes fish wander all over the tank naturally — different directions, different heights, different speeds. Each fish also has its own wobble speed and amplitude, so no two fish move the same way.
 
-Each **spawn animation object** has:
-
-| PROPERTY | TYPE | PURPOSE |
-|----------|------|---------|
-| `bubbles` | Array | 8–12 bubble objects, each with x, y, radius, opacity, angle |
-| `centerX` | Number | Where the bubbles converge (fish spawn point X) |
-| `centerY` | Number | Where the bubbles converge (fish spawn point Y) |
-| `phase` | Number | 1 = gathering, 2 = pop, 3 = done |
-| `timer` | Number | Frame counter for timing the phases |
-| `fishData` | Object | The fish object waiting to be spawned after animation |
+**How spawn drop-in works:** When a fish is first created, `spawning` is `true`. The fish starts above the screen (`y = -100`) and falls downward with gravity (`velocityY` increases each frame). When it reaches `targetSpawnY`, it bounces (velocity reverses and shrinks). After a few bounces settle, `spawning` switches to `false` and the fish starts normal destination-based swimming.
 
 ### Step 3.3: Wire Up the Spawn Button
 
@@ -291,10 +282,11 @@ Add a click listener on `#spawnBtn` that does the following, in order:
 1. **Get the fish name:** `const name = fishName.value || 'Unnamed Fish'`
 2. **Export the drawing:** `const dataURL = drawCanvas.toDataURL('image/png')`
 3. **Create an Image object:** `const img = new Image()` then `img.src = dataURL`
-4. **Wait for the image to load:** Everything below goes inside `img.onload = () => { ... }`
-5. **Pick a random starting position:**
-   - `x`: either `-100` (start offscreen left) or `fishCanvas.width + 100` (start offscreen right)
-   - `y`: random between `50` and `fishCanvas.height - 150`
+4. **Wait for the image to load:** Everything below goes inside `img.onload = function() { ... }`
+5. **Pick a random x position and target y:**
+   - `x`: random between `100` and `fishCanvas.width - 200` (somewhere across the screen)
+   - `targetSpawnY`: random between `50` and `fishCanvas.height - 150` (where the fish will settle)
+   - `y`: `-100` (starts above the screen — offscreen)
 6. **Pick a random first destination:**
    - `destX`: random between `50` and `fishCanvas.width - 100`
    - `destY`: random between `50` and `fishCanvas.height - 150`
@@ -304,28 +296,14 @@ Add a click listener on `#spawnBtn` that does the following, in order:
    - `wobbleSpeed`: random between `0.001` and `0.004` (how fast it bobs)
    - `wobbleAmount`: random between `0.3` and `1.0` (how much it bobs)
 8. **Set dimensions:** Scale the drawing down to about 80–120px wide. Maintain aspect ratio.
-9. **Create the fish object** with all properties. Set `targetX` and `targetY` to `null`. Set `opacity` to `0` (fish starts invisible — the bubble animation reveals it).
-9. **Create a spawn animation** instead of pushing the fish directly into `fishArray`:
-   - Generate 8–12 bubble objects around the spawn point (see Step 3.3b)
-   - Create a spawn animation object with `phase: 1`, `timer: 0`, and the fish data
-   - Push it into `spawnAnimations`
-10. **Close the overlay** and clear the draw canvas and name input.
-
-### Step 3.3b: Generating Spawn Bubbles
-
-For each of the 8–12 bubbles, create an object:
-
-```javascript
-{
-    x: centerX + (Math.random() - 0.5) * 120,   // scattered around spawn point
-    y: centerY + (Math.random() - 0.5) * 120,
-    radius: 4 + Math.random() * 8,               // random size 4–12px
-    opacity: 0.6 + Math.random() * 0.4,          // 0.6–1.0 opacity
-    angle: Math.random() * Math.PI * 2            // random direction for initial spread
-}
-```
-
-The bubbles start scattered in a ~120px radius around the spawn point.
+9. **Create the fish object** with all properties including:
+   - `targetX: null`, `targetY: null` (no bait target)
+   - `opacity: 0` (starts invisible, fades in during drop)
+   - `spawning: true` (drop-in animation active)
+   - `velocityY: 0` (initial falling speed — gravity will increase this)
+   - `targetSpawnY` (where the fish falls to)
+10. **Push the fish directly into `fishArray`** — no separate animation array needed. The animation loop checks `fish.spawning` to decide whether to drop or swim.
+11. **Close the overlay** and clear the draw canvas and name input.
 
 ### Step 3.4: Build the Animation Loop
 
@@ -333,57 +311,40 @@ Create a function called `animate` that runs ~60 times per second. Every frame:
 
 1. **Clear the entire fish canvas:** `fishCtx.clearRect(0, 0, fishCanvas.width, fishCanvas.height)`
 
-2. **Update and draw spawn animations** (before drawing fish):
+2. **Loop through `fishArray`** and for each fish, check if it's spawning or swimming:
 
-   Loop through `spawnAnimations`. For each animation:
+   **If `fish.spawning` is true — Drop-in animation:**
 
-   **Phase 1 — Bubbles gather (60 frames / ~1 second):**
-   - Move each bubble toward `centerX`/`centerY`:
-     ```javascript
-     bubble.x += (anim.centerX - bubble.x) * 0.04;
-     bubble.y += (anim.centerY - bubble.y) * 0.04;
-     ```
-   - Add a slight wobble so they don't move in a straight line:
-     ```javascript
-     bubble.x += Math.sin(anim.timer * 0.1 + bubble.angle) * 0.5;
-     bubble.y += Math.cos(anim.timer * 0.1 + bubble.angle) * 0.5;
-     ```
-   - Shrink bubbles slightly as they converge: `bubble.radius *= 0.995`
-   - Draw each bubble as a translucent white circle:
-     ```javascript
-     fishCtx.beginPath();
-     fishCtx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
-     fishCtx.fillStyle = 'rgba(255, 255, 255,' + bubble.opacity + ')';
-     fishCtx.fill();
-     ```
-   - Increment `anim.timer`. When `timer > 60`, switch to phase 2.
+   Fade in as it falls:
+   ```javascript
+   if (fish.opacity < 1) fish.opacity += 0.03;
+   ```
 
-   **Phase 2 — Pop burst (15 frames / ~0.25 seconds):**
-   - Rapidly expand each bubble outward from center:
-     ```javascript
-     const angle = Math.atan2(bubble.y - anim.centerY, bubble.x - anim.centerX);
-     bubble.x += Math.cos(angle) * 4;
-     bubble.y += Math.sin(angle) * 4;
-     ```
-   - Fade out quickly: `bubble.opacity -= 0.07`
-   - Draw a white flash circle at center that expands and fades:
-     ```javascript
-     const flashRadius = (anim.timer - 60) * 4;
-     const flashOpacity = 1 - (anim.timer - 60) / 15;
-     fishCtx.beginPath();
-     fishCtx.arc(anim.centerX, anim.centerY, flashRadius, 0, Math.PI * 2);
-     fishCtx.fillStyle = 'rgba(255, 255, 255,' + flashOpacity + ')';
-     fishCtx.fill();
-     ```
-   - When `timer > 75`, switch to phase 3.
+   Apply gravity — velocity increases each frame, making the fish accelerate downward:
+   ```javascript
+   fish.velocityY += 0.3;              // gravity
+   fish.y += fish.velocityY;           // move down
+   ```
 
-   **Phase 3 — Fish revealed:**
-   - Push `anim.fishData` into `fishArray`
-   - Remove this animation from `spawnAnimations`
+   Check if fish reached its target y position:
+   ```javascript
+   if (fish.y >= fish.targetSpawnY) {
+       fish.y = fish.targetSpawnY;      // snap to target
+       fish.velocityY *= -0.4;          // bounce: reverse direction, lose energy
+       
+       // if bounce is tiny, stop bouncing and start swimming
+       if (Math.abs(fish.velocityY) < 0.5) {
+           fish.spawning = false;
+           fish.opacity = 1;
+           fish.y = fish.targetSpawnY;
+       }
+   }
+   ```
+   The bounce works by reversing `velocityY` and multiplying by `0.4` — each bounce is smaller than the last. The fish overshoots down, bounces up a bit, falls again, bounces less, until the motion is tiny enough to stop. Then `spawning` flips to `false` and normal swimming begins.
 
-3. **Loop through `fishArray`** and for each fish, update its position and draw it:
+   **If `fish.spawning` is false — Normal swimming:**
 
-   **Fade in after spawn:** If `fish.opacity < 1`, increment it: `fish.opacity += 0.05`. Apply opacity when drawing:
+   Apply opacity (in case it's still fading in):
    ```javascript
    fishCtx.globalAlpha = fish.opacity;
    // draw the fish...
@@ -461,7 +422,7 @@ fishCtx.fillText(fish.name, fish.x + fish.width / 2, fish.y + fish.height + 15);
 ```
 
 > **Major test checkpoint:**
-> Draw a fish, name it, click Spawn. The overlay should close. You should see bubbles converge, pop with a flash, and the fish appears fading in — then starts wandering around the tank with its name, swimming toward random destinations, wobbling naturally, and flipping to face the direction it's heading. Spawn multiple fish — each should wander independently with different speeds, wobble patterns, and destinations. **If this works, the hard part is done.**
+> Draw a fish, name it, click Spawn. The overlay should close. You should see the fish drop in from above the screen, accelerating downward, bouncing gently when it reaches its target position, then settling into normal swimming — wandering around the tank with its name, swimming toward random destinations, wobbling naturally, and flipping to face the direction it's heading. Spawn multiple fish — each should drop in at a different x position and wander independently with different speeds, wobble patterns, and destinations. **If this works, the hard part is done.**
 
 ---
 
@@ -741,9 +702,9 @@ body.pixel-mode #drawBtn {
 │    ↕ bg-foreground.png (slow sway ~5px)        │
 │      ✨ bg-light.png (opacity pulse)           │
 │                                                │
-│     🫧 ← bubbles converge                      │
-│     💥 ← pop! flash of light                   │
-│        🐟 "Nemo" fades in, starts swimming     │
+│        🐟 ← "Nemo" drops in from above          │
+│        ↓  falls with gravity, bounces, settles │
+│        🐟 "Nemo" starts wandering              │
 │        🐟 "Bubbles" swimming on canvas         │
 │        🫧 ambient bubbles floating up          │
 │                                                │
@@ -779,7 +740,7 @@ body.pixel-mode #drawBtn {
 | 1 | Extension loads, dark screen + floating draw button | New tab shows dark blue background with round `+` button |
 | 2 | Draw button toggles fullscreen overlay open/closed | Click `+` → overlay appears. Click again → disappears. |
 | 3 | Can draw on large canvas with colors/sizes/eraser/clear | Freehand drawing works in the overlay with all controls |
-| 4 | Spawn triggers bubble pop animation then fish appears | Draw, name, spawn → overlay closes, bubbles converge, pop, fish fades in |
+| 4 | Spawn triggers drop-in animation then fish swims | Draw, name, spawn → overlay closes, fish drops from above, bounces, starts swimming |
 | 5 | Fish swim with name, wobble, and flip at edges | Multiple fish move independently with different speeds |
 | 6 | Ocean art shows as background with CSS animation | Hand-drawn art fills screen with subtle sway and light pulse |
 | 7 | Mode toggle switches between standard and pixel art | Backgrounds swap, pixel mode renders with hard pixel edges |
