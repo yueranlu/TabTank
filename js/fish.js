@@ -89,41 +89,41 @@ function animate() {
     if (fih.spawning == true) {
       if (fih.opacity < 1) {
         fih.opacity += 0.03;
-        fih.velocityY += 0.3;
-        fih.y += fih.velocityY;
       }
+      fih.velocityY += 0.3;
+      fih.y += fih.velocityY;
 
       //check is fish has reached it;s corresponding y
       if (fih.y >= fih.targetSpawnY) {
         fih.y = fih.targetSpawnY;
-        fih.velocity *= -0.4; // this will bounce the fish
-        if (Math.abs(fih.velocity) < 0.5) {
+        fih.velocityY *= -0.4; // this will bounce the fish
+        if (Math.abs(fih.velocityY) < 0.5) {
           fih.spawning = false;
           fih.opacity = 1;
-          fih.y = targetSpawnY;
+          fih.y = fih.targetSpawnY;
         }
       }
     } else if (fih.spawning == false) {
       // find distance and direction to the next point
-      const dx = fish.destX - fish.x;
-      const dy = fish.destY - fish.y;
-      const distance = Math.sqrt(dx * d + dy * dy);
+      const dx = fih.destX - fish.x;
+      const dy = fih.destY - fish.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
       //move the fish towards the point so update fish's position using the fish's speed
-      fish.x += (dx / distance) * fish.speed;
-      fish.y += (dy / distance) * fish.speed;
+      fih.x += (dx / distance) * fish.speed;
+      fih.y += (dy / distance) * fish.speed;
       // add a wobble
-      fish.y +=
-        Math.sin(Date.now() * fish.wobbleSpeed + fish.wobbleOffset) *
-        fish.wobbleAmount;
+      fih.y +=
+        Math.sin(Date.now() * fih.wobbleSpeed + fih.wobbleOffset) *
+        fih.wobbleAmount;
       //pick new destintation when fish arrives
 
       if (distance < 20) {
-        fish.destX = 50 + Math.random() * (fishCanvas.width - 100);
-        fish.destY = 50 + Math.random() * (fishCanvas.height - 150);
+        fih.destX = 50 + Math.random() * (fishCanvas.width - 100);
+        fih.destY = 50 + Math.random() * (fishCanvas.height - 150);
       }
     }
     // reset pen to 1 for next fish
     fishCtx.globalAlpha = fish.opacity;
-    fishCtc.globalAplha = 1;
+    fishCtx.globalAlpha = 1;
   }
 }
