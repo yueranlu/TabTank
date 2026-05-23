@@ -26,12 +26,12 @@ body {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    z-index:21;
+    z-index: 21;
     width: 60px;
     height: 60px;
     border-radius: 50%;
     border: none;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
     color: white;
     font-size: 28px;
     cursor: pointer;
@@ -41,7 +41,7 @@ body {
     position: fixed;
     flex-direction: column;
     align-items: center;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0, 0, 0, 0.3);
     top: 0;
     left: 0;
     width: 100%;
@@ -50,18 +50,18 @@ body {
     display: none;
 }
 
-#toolbar{
+#toolbar {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0, 0, 0, 0.7);
     width: 100%;
     justify-content: center;
 }
 
 #closeBtn {
-    position:absolute;
+    position: absolute;
     top: 12px;
     right: 12px;
     background: none;
@@ -79,10 +79,10 @@ body {
 }
 
 #drawCanvas {
-    background: white;
+    background: rgba(255, 255, 255, 0.4);
     border-radius: 8px;
     cursor: crosshair;
-    margin-top: 20px
+    margin-top: 20px;
 }
 
 #baitBucket {
