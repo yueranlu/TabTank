@@ -37,7 +37,7 @@ spawnBtn.addEventListener("click", function () {
     const destY = Math.random() * (fishCanvas.height - 150) + 50;
 
     //pick random speeds
-    const speed = Math.random() * 2 + 0.5; // speed between 0.5 and 2.5
+    const speed = Math.random() * 1 + 0.5; // speed between 0.5 and 2.5
     const wobbleOffset = Math.random() * Math.PI * 2;
     const wobbleSpeed = Math.random() * 0.003 + 0.001;
     const wobbleAmount = Math.random() * 0.7 + 0.3;
@@ -71,8 +71,6 @@ spawnBtn.addEventListener("click", function () {
     // now clear canvas
     drawOverlay.style.display = "none";
     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-    drawCtx.fillStyle = "white";
-    drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
     fishName.value = "";
   };
 });
