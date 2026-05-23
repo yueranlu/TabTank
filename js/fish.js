@@ -127,14 +127,14 @@ function animate() {
 
     //if fish is swimming left flip it
     if (fih.x > fih.destX) {
-      fihCtx.save();
-      fihCtx.translate(fih.x + fih.width, fih.y);
-      fihCtx.scale(-1, 1);
-      fihCtx.drawImage(fih.image, 0, 0, fih.width, fih.height);
-      fihCtx.restore();
+      fishCtx.save();
+      fishCtx.translate(fih.x + fih.width, fih.y);
+      fishCtx.scale(-1, 1);
+      fishCtx.drawImage(fih.image, 0, 0, fih.width, fih.height);
+      fishCtx.restore();
       // if fish is swimming right normal
-    } else if (fih.x < fih.destX) {
-      fihCtx.drawImage(fih.image, fih.x, fih.y, fih.width, fih.height);
+    } else {
+      fishCtx.drawImage(fih.image, fih.x, fih.y, fih.width, fih.height);
     }
     fishCtx.globalAlpha = 1;
   }
