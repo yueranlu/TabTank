@@ -83,7 +83,7 @@ spawnBtn.addEventListener("click", function () {
 // sets the en that draws that fish to 0.4 and then resert it to 1 for the next fish
 function animate() {
   fishCtx.clearRect(0, 0, fishCanvas.width, fishCanvas.height);
-  for (i = 0; i < fishArray.length; i++) {
+  for (let i = 0; i < fishArray.length; i++) {
     const fih = fishArray[i];
     // animation when fish is falling and spawning into the tank
     if (fih.spawning == true) {
@@ -105,12 +105,12 @@ function animate() {
       }
     } else if (fih.spawning == false) {
       // find distance and direction to the next point
-      const dx = fih.destX - fish.x;
-      const dy = fih.destY - fish.y;
+      const dx = fih.destX - fih.x;
+      const dy = fih.destY - fih.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       //move the fish towards the point so update fish's position using the fish's speed
-      fih.x += (dx / distance) * fish.speed;
-      fih.y += (dy / distance) * fish.speed;
+      fih.x += (dx / distance) * fih.speed;
+      fih.y += (dy / distance) * fih.speed;
       // add a wobble
       fih.y +=
         Math.sin(Date.now() * fih.wobbleSpeed + fih.wobbleOffset) *
@@ -122,8 +122,23 @@ function animate() {
         fih.destY = 50 + Math.random() * (fishCanvas.height - 150);
       }
     }
-    // reset pen to 1 for next fish
-    fishCtx.globalAlpha = fish.opacity;
+    // reset pen to 1 for next fish and set actual fish opacity (global alpha) with opacity
+    fishCtx.globalAlpha = fih.opacity;
+
+    //if fish is swimming left flip it
+    if (fih.x > fih.destX) {
+      fihCtx.save();
+      fihCtx.translate(fih.x + fih.width, fih.y);
+      fihCtx.scale(-1, 1);
+      fihCtx.drawImage(fih.image, 0, 0, fih.width, fih.height);
+      fihCtx.restore();
+      // if fish is swimming right normal
+    } else if (fih.x < fih.destX) {
+      fihCtx.drawImage(fih.image, fih.x, fih.y, fih.width, fih.height);
+    }
     fishCtx.globalAlpha = 1;
   }
+  requestAnimationFrame(animate);
 }
+
+animate();
