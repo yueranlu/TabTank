@@ -2,7 +2,25 @@ body {
     margin: 0;
     width: 100vw;
     height: 100vh;
-    background: #0a1628;
+    background: repeating-linear-gradient(
+        to bottom,
+        #0a1628 0px,
+        #0a1628 40px,
+        #102845 40px,
+        #102845 80px,
+        #1a3a6e 80px,
+        #1a3a6e 120px,
+        #2a5599 120px,
+        #2a5599 160px,
+        #3a6cb5 160px,
+        #3a6cb5 200px,
+        #2a5599 200px,
+        #2a5599 240px,
+        #1a3a6e 240px,
+        #1a3a6e 280px,
+        #102845 280px,
+        #102845 320px
+    );
     overflow: hidden;
 }
 
@@ -41,7 +59,9 @@ body {
     position: fixed;
     flex-direction: column;
     align-items: center;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(10, 30, 60, 0.4);
+    backdrop-filter: blur(15px) saturate(150%);
+    -webkit-backdrop-filter: blur(15px) saturate(150%);
     top: 0;
     left: 0;
     width: 100%;
@@ -79,7 +99,11 @@ body {
 }
 
 #drawCanvas {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(180, 220, 255, 0.2);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     border-radius: 8px;
     cursor: crosshair;
     margin-top: 20px;

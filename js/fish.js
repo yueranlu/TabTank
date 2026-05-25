@@ -42,7 +42,7 @@ spawnBtn.addEventListener("click", function () {
     const wobbleSpeed = Math.random() * 0.003 + 0.001;
     const wobbleAmount = Math.random() * 0.7 + 0.3;
 
-    const fishWidth = Math.random() * 40 + 80;
+    const fishWidth = Math.random() * 40 + 100;
     const fishHeight = fishWidth * (drawCanvas.height / drawCanvas.width);
 
     // creating fish object

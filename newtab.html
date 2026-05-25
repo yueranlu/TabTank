@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 
-<html>  
+<html>
     <head>
-        <link rel = "stylesheet" href = "css/style.css">
+        <link rel="stylesheet" href="css/style.css" />
     </head>
 
     <body>
-        <div id="ocean"> </div>
+        <div id="ocean"></div>
 
         <canvas id="fishCanvas"></canvas>
 
@@ -14,9 +14,15 @@
 
         <div id="drawOverlay">
             <div id="toolbar">
-                <input type="text" id = "fishName" placeholder="Name your fish">
-                <input type="color" id="colorPicker" value="#000000">
-                <input type="range" id="brushSlider" min="1" max="20" value="4">
+                <input type="text" id="fishName" placeholder="Name your fish" />
+                <input type="color" id="colorPicker" value="#000000" />
+                <input
+                    type="range"
+                    id="brushSlider"
+                    min="1"
+                    max="20"
+                    value="4"
+                />
                 <button id="eraserBtn">Eraser</button>
                 <button id="clearBtn">Clear</button>
                 <button id="spawnBtn">Save</button>
@@ -24,12 +30,11 @@
             <canvas id="drawCanvas" width="800" height="500"></canvas>
         </div>
 
-        <div id="baitBucket"> </div>
+        <div id="baitBucket"></div>
 
         <script src="js/storage.js"></script>
         <script src="js/fish.js"></script>
         <script src="js/painter.js"></script>
         <script src="js/bubbles.js"></script>
-        
     </body>
 </html>
